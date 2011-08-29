@@ -36,7 +36,7 @@ namespace HandBrake.ApplicationServices.Parsing
     /// <param name="currentFps">The current encoding fps</param>
     /// <param name="averageFps">The average encoding fps for this task</param>
     /// <param name="timeRemaining">The estimated time remaining for this task to complete</param>
-    public delegate void EncodeProgressEventHandler(object sender, int currentTask, int taskCount, float percentComplete, float currentFps, float averageFps, string timeRemaining);
+    public delegate void EncodeProgressEventHandler(object sender, int currentTask, int taskCount, float percentComplete, float currentFps, float averageFps, TimeSpan timeRemaining);
 
     /// <summary>
     /// A simple wrapper around a StreamReader to keep track of the entire output from a cli process
@@ -124,6 +124,7 @@ namespace HandBrake.ApplicationServices.Parsing
             string tmp = base.ReadToEnd();
 
             buffer.Append(tmp + Environment.NewLine);
+            
             if (OnReadToEnd != null)
                 OnReadToEnd(this, tmp);
 
@@ -146,17 +147,12 @@ namespace HandBrake.ApplicationServices.Parsing
                 float percent = float.Parse(m.Groups[3].Value, culture);
                 float currentFps = m.Groups[5].Value == string.Empty ? 0.0F : float.Parse(m.Groups[5].Value, culture);
                 float avgFps = m.Groups[6].Value == string.Empty ? 0.0F : float.Parse(m.Groups[6].Value, culture);
-                string remaining = string.Empty;
+                TimeSpan remaining = TimeSpan.Zero;
                 if (m.Groups[7].Value != string.Empty)
                 {
-                    remaining = m.Groups[7].Value + ":" + m.Groups[8].Value + ":" + m.Groups[9].Value;
+                    remaining = TimeSpan.Parse(m.Groups[7].Value + ":" + m.Groups[8].Value + ":" + m.Groups[9].Value);
                 }
-                if (string.IsNullOrEmpty(remaining))
-                {
-                    remaining = "Calculating ...";
-                }
-
-                OnEncodeProgress(this, currentTask, totalTasks, percent, currentFps, avgFps, remaining);
+            OnEncodeProgress(this, currentTask, totalTasks, percent, currentFps, avgFps, remaining);
             }
         }
     }

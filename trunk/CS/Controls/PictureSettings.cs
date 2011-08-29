@@ -13,6 +13,8 @@ namespace Handbrake.Controls
     using HandBrake.ApplicationServices.Model;
     using HandBrake.ApplicationServices.Parsing;
 
+    using Presets;
+
     /// <summary>
     /// The Picture Settings Panel
     /// </summary>
