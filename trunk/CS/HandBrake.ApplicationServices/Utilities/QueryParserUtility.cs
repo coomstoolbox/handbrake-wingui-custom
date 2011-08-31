@@ -16,14 +16,11 @@ namespace HandBrake.ApplicationServices.Utilities
     using HandBrake.Interop.Model;
     using HandBrake.Interop.Model.Encoding;
 
-    using Anamorphic = HandBrake.ApplicationServices.Model.Encoding.Anamorphic;
-
     /// <summary>
     /// Parse a CLI Query
     /// </summary>
     public class QueryParserUtility
     {
-
         /**
          * TODO
          * - Add support for PointToPointMode = Seconds or Frames
@@ -178,10 +175,12 @@ namespace HandBrake.ApplicationServices.Utilities
                             int.Parse(actCropValues[1]),
                             int.Parse(actCropValues[2]),
                             int.Parse(actCropValues[3]));
-                        parsed.IsCustomCropping = true;
+                        parsed.HasCropping = true;
                     }
                     catch (Exception)
                     {
+                        parsed.Cropping = null;
+                        parsed.HasCropping = false;
                         // No need to do anything.
                     }
                 }
