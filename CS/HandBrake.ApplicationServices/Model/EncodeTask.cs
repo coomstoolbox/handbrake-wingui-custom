@@ -113,14 +113,14 @@ namespace HandBrake.ApplicationServices.Model
         public int? MaxHeight { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether CustomCropping.
-        /// </summary>
-        public bool IsCustomCropping { get; set; }
-
-        /// <summary>
         /// Gets or sets Cropping.
         /// </summary>
         public Cropping Cropping { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether HasCropping.
+        /// </summary>
+        public bool HasCropping { get; set; }
 
         /// <summary>
         /// Gets or sets Anamorphic.
