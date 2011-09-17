@@ -5,19 +5,11 @@
 
 namespace HandBrake.ApplicationServices.Model
 {
-    using System;
-
     /// <summary>
     /// The QueueTask.
     /// </summary>
     public class QueueTask
     {
-        /*
-         * TODO
-         * - Update the Query property to generate the query from the EncodeTask object.
-         * - Remove Sourcee, Destination and Title when they are no longer used.
-         */
-
         /// <summary>
         /// Initializes a new instance of the <see cref="QueueTask"/> class.
         /// </summary>

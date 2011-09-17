@@ -22,6 +22,7 @@ namespace Handbrake.Controls
     using HandBrake.ApplicationServices.Parsing;
     using HandBrake.ApplicationServices.Services.Interfaces;
     using HandBrake.ApplicationServices.Utilities;
+    using HandBrake.Interop.Model.Encoding;
 
     using Handbrake.ToolWindows;
 
@@ -128,19 +129,19 @@ namespace Handbrake.Controls
             string oldval = drp_audioEncoder.Text;
 
             drp_audioEncoder.Items.Clear();
-            drp_audioEncoder.Items.Add(EnumHelper<AudioEncoder>.GetDescription(AudioEncoder.Faac));
-            drp_audioEncoder.Items.Add(EnumHelper<AudioEncoder>.GetDescription(AudioEncoder.ffaac));
-            drp_audioEncoder.Items.Add(EnumHelper<AudioEncoder>.GetDescription(AudioEncoder.AacPassthru));
-            drp_audioEncoder.Items.Add(EnumHelper<AudioEncoder>.GetDescription(AudioEncoder.Lame));
-            drp_audioEncoder.Items.Add(EnumHelper<AudioEncoder>.GetDescription(AudioEncoder.Mp3Passthru));
-            drp_audioEncoder.Items.Add(EnumHelper<AudioEncoder>.GetDescription(AudioEncoder.Ac3Passthrough));
-            drp_audioEncoder.Items.Add(EnumHelper<AudioEncoder>.GetDescription(AudioEncoder.Ac3));
-            drp_audioEncoder.Items.Add(EnumHelper<AudioEncoder>.GetDescription(AudioEncoder.DtsPassthrough));
-            drp_audioEncoder.Items.Add(EnumHelper<AudioEncoder>.GetDescription(AudioEncoder.DtsHDPassthrough));
+            drp_audioEncoder.Items.Add(EnumHelper<AudioEncoder>.GetDisplay(AudioEncoder.Faac));
+            drp_audioEncoder.Items.Add(EnumHelper<AudioEncoder>.GetDisplay(AudioEncoder.ffaac));
+            drp_audioEncoder.Items.Add(EnumHelper<AudioEncoder>.GetDisplay(AudioEncoder.AacPassthru));
+            drp_audioEncoder.Items.Add(EnumHelper<AudioEncoder>.GetDisplay(AudioEncoder.Lame));
+            drp_audioEncoder.Items.Add(EnumHelper<AudioEncoder>.GetDisplay(AudioEncoder.Mp3Passthru));
+            drp_audioEncoder.Items.Add(EnumHelper<AudioEncoder>.GetDisplay(AudioEncoder.Ac3Passthrough));
+            drp_audioEncoder.Items.Add(EnumHelper<AudioEncoder>.GetDisplay(AudioEncoder.Ac3));
+            drp_audioEncoder.Items.Add(EnumHelper<AudioEncoder>.GetDisplay(AudioEncoder.DtsPassthrough));
+            drp_audioEncoder.Items.Add(EnumHelper<AudioEncoder>.GetDisplay(AudioEncoder.DtsHDPassthrough));
 
             if (path.Contains("MKV"))
             {
-                drp_audioEncoder.Items.Add(EnumHelper<AudioEncoder>.GetDescription(AudioEncoder.Vorbis));
+                drp_audioEncoder.Items.Add(EnumHelper<AudioEncoder>.GetDisplay(AudioEncoder.Vorbis));
             }
 
             if (!drp_audioEncoder.Text.Contains(oldval))
@@ -166,7 +167,7 @@ namespace Handbrake.Controls
         {
             ClearAudioList();
 
-            if (tracks == null)
+            if (tracks == null || (drp_audioTrack.SelectedItem != null && drp_audioTrack.SelectedItem.ToString() == AudioHelper.NoneFound.Description))
                 return;
 
             foreach (AudioTrack track in tracks)
@@ -174,14 +175,19 @@ namespace Handbrake.Controls
                 if (track.Encoder == AudioEncoder.Ac3Passthrough || track.Encoder == AudioEncoder.DtsPassthrough ||
                     track.Encoder == AudioEncoder.DtsHDPassthrough || track.Encoder == AudioEncoder.AacPassthru || track.Encoder == AudioEncoder.Mp3Passthru)
                 {
-                    track.MixDown = HandBrake.ApplicationServices.Model.Encoding.Mixdown.Passthrough;
+                    track.MixDown = HandBrake.Interop.Model.Encoding.Mixdown.Passthrough;
                     track.Bitrate = 0;
                 }
 
                 this.audioTracks.Add(track);
             }
 
-            this.AutomaticTrackSelection();
+            if (tracks.Count == 0 || tracks[0].ScannedTrack.TrackNumber == 0)
+            {
+                this.AutomaticTrackSelection();
+            }
+
+           
 
             if (this.AudioListChanged != null)
                 this.AudioListChanged(this, new EventArgs());
@@ -247,6 +253,9 @@ namespace Handbrake.Controls
         /// </param>
         private void ControlChanged(object sender, EventArgs e)
         {
+            Control ctl = (Control)sender;
+
+            // Some Sanity Checking
             if (audioList.SelectedRows.Count == 0)
             {
                 return;
@@ -258,8 +267,7 @@ namespace Handbrake.Controls
                 return;
             }
 
-            Control ctl = (Control)sender;
-
+            // Handle the changed control and selected audio track.
             switch (ctl.Name)
             {
                 case "drp_audioTrack":
@@ -271,12 +279,12 @@ namespace Handbrake.Controls
                         if (this.IsIncompatiblePassthru(track))
                         {
                             AudioEncoder encoder = GetCompatiblePassthru(track);
-                            drp_audioEncoder.SelectedItem = EnumHelper<AudioEncoder>.GetDescription(encoder);
+                            drp_audioEncoder.SelectedItem = EnumHelper<AudioEncoder>.GetDisplay(encoder);
                         } 
                     }
                     break;
                 case "drp_audioEncoder":
-                    SetMixDown(EnumHelper<Mixdown>.GetDescription(track.MixDown));
+                    SetMixDown(EnumHelper<Mixdown>.GetDisplay(track.MixDown));
 
                     // Configure the widgets with values
                     if (drp_audioEncoder.Text.Contains(Passthru))
@@ -297,7 +305,7 @@ namespace Handbrake.Controls
                     if (this.IsIncompatiblePassthru(track))
                     {
                         AudioEncoder encoder = GetCompatiblePassthru(track);
-                        drp_audioEncoder.SelectedItem = EnumHelper<AudioEncoder>.GetDescription(encoder);
+                        drp_audioEncoder.SelectedItem = EnumHelper<AudioEncoder>.GetDisplay(encoder);
                     }
                     break;
                 case "drp_audioMix":
@@ -345,8 +353,8 @@ namespace Handbrake.Controls
                 if (track != null)
                 {
                     drp_audioTrack.SelectedItem = track.ScannedTrack;
-                    drp_audioEncoder.SelectedItem = EnumHelper<AudioEncoder>.GetDescription(track.Encoder);
-                    drp_audioMix.SelectedItem = EnumHelper<Mixdown>.GetDescription(track.MixDown);
+                    drp_audioEncoder.SelectedItem = EnumHelper<AudioEncoder>.GetDisplay(track.Encoder);
+                    drp_audioMix.SelectedItem = EnumHelper<Mixdown>.GetDisplay(track.MixDown);
                     drp_audioSample.SelectedItem = track.SampleRateDisplayValue;
                     drp_audioBitrate.SelectedItem = track.BitRateDisplayValue;
 
@@ -400,6 +408,10 @@ namespace Handbrake.Controls
                     Gain = 0,
                     DRC = 0,
                 };
+
+            // Force an update of the mixdown control
+            this.SetMixDown(EnumHelper<Mixdown>.GetDisplay(track.MixDown));
+            this.SetBitrate(track.Bitrate);
 
             this.audioTracks.Add(track);
 
@@ -979,7 +991,8 @@ namespace Handbrake.Controls
             }
 
             // If the track isn't DTS, and the encoder is, change it.
-            if (track.Encoder == AudioEncoder.DtsPassthrough && !track.ScannedTrack.Format.Contains("DTS"))
+            if (track.Encoder == AudioEncoder.DtsPassthrough || track.Encoder == AudioEncoder.DtsHDPassthrough 
+                && !track.ScannedTrack.Format.Contains("DTS"))
             {
                 return true;
             }
