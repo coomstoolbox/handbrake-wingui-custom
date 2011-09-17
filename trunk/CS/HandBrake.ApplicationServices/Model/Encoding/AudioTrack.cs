@@ -8,7 +8,9 @@ namespace HandBrake.ApplicationServices.Model.Encoding
     using System;
     using System.ComponentModel;
 
+    using HandBrake.ApplicationServices.Functions;
     using HandBrake.ApplicationServices.Parsing;
+    using HandBrake.Interop.Model.Encoding;
 
     /// <summary>
     /// An Audio Track for the Audio Panel
@@ -121,6 +123,29 @@ namespace HandBrake.ApplicationServices.Model.Encoding
                 return this.Bitrate.ToString();
             }
         }
+
+        /// <summary>
+        /// Gets AudioEncoderDisplayValue.
+        /// </summary>
+        public string AudioEncoderDisplayValue
+        {
+            get
+            {
+                return EnumHelper<AudioEncoder>.GetDisplay(this.Encoder);
+            }
+        }
+
+        /// <summary>
+        /// Gets AudioMixdownDisplayValue.
+        /// </summary>
+        public string AudioMixdownDisplayValue
+        {
+            get
+            {
+                return EnumHelper<Mixdown>.GetDisplay(this.MixDown);
+            }
+        }
+
 
         /// <summary>
         /// Gets or sets Audio Mixdown
