@@ -46,6 +46,16 @@ namespace HandBrake.ApplicationServices.Model
         public bool IsBuildIn { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether IsDefault.
+        /// </summary>
+        public bool IsDefault { get; set; }
+
+        /// <summary>
+        /// Gets or sets task.
+        /// </summary>
+        public EncodeTask Task { get; set; }
+
+        /// <summary>
         ///  Override the ToString Method
         /// </summary>
         /// <returns>

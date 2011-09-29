@@ -14,14 +14,13 @@ namespace Handbrake
     using System.IO;
     using System.Linq;
     using System.Threading;
-    using System.Windows;
     using System.Windows.Forms;
 
     using Functions;
 
     using HandBrake.ApplicationServices;
     using HandBrake.ApplicationServices.EventArgs;
-    using HandBrake.ApplicationServices.Model.Encoding;
+    using HandBrake.ApplicationServices.Exceptions;
     using HandBrake.ApplicationServices.Model.General;
     using HandBrake.ApplicationServices.Utilities;
     using HandBrake.ApplicationServices.Functions;
@@ -182,10 +181,9 @@ namespace Handbrake
                 ToolTip.Active = true;
 
             // Load the user's default settings or Normal Preset
-            if (userSettingService.GetUserSetting<string>(UserSettingConstants.DefaultPreset) != string.Empty
-                && presetHandler.GetPreset(userSettingService.GetUserSetting<string>(UserSettingConstants.DefaultPreset)) != null)
+            if (this.presetHandler.DefaultPreset != null)
             {
-                this.loadPreset(userSettingService.GetUserSetting<string>(UserSettingConstants.DefaultPreset));
+                this.loadPreset(this.presetHandler.DefaultPreset.Name);
             }
             else
                 loadPreset("Normal");
@@ -230,7 +228,7 @@ namespace Handbrake
             catch (Exception ex)
             {
                 if ((bool)result.AsyncState)
-                    Main.ShowExceptiowWindow("Unable to check for updates, Please try again later.", ex.ToString());
+                    throw new GeneralApplicationException("Unable to check for updates.", "Please try again later. The service may currently be down or inaccessible. ", ex);
             }
         }
 
@@ -569,12 +567,7 @@ namespace Handbrake
         /// </param>
         private void pmnu_delete_click(object sender, EventArgs e)
         {
-            if (treeView_presets.SelectedNode != null)
-            {
-                presetHandler.Remove((Preset)treeView_presets.SelectedNode.Tag);
-                treeView_presets.Nodes.Remove(treeView_presets.SelectedNode);
-            }
-            treeView_presets.Select();
+            BtnRemovePreset_Click(sender, e);
         }
 
         /// <summary>
@@ -639,21 +632,41 @@ namespace Handbrake
                 }
                 else
                 {
+                   Preset preset = treeView_presets.SelectedNode.Tag as Preset;
+                   if (preset != null && preset.IsDefault)
+                   {
+                       MessageBox.Show(
+                           "Your default preset can not be deleted. It is a required preset.",
+                           "Warning",
+                           MessageBoxButtons.OK,
+                           MessageBoxIcon.Information);
+                   }
+
                     // Delete the selected item.
                     presetHandler.Remove((Preset)treeView_presets.SelectedNode.Tag);
                 }
-                treeView_presets.Nodes.Remove(treeView_presets.SelectedNode);
+
+                this.LoadPresetPanel();
             }
 
             treeView_presets.Select();
+            treeView_presets.ExpandAll();
         }
 
         private void MnuSetDefaultPreset_Click(object sender, EventArgs e)
         {
             if (treeView_presets.SelectedNode != null)
             {
-                this.userSettingService.SetUserSetting(UserSettingConstants.DefaultPreset, treeView_presets.SelectedNode.Text);
-                MessageBox.Show("New default preset set: " + treeView_presets.SelectedNode.Text, "Alert", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Preset preset = treeView_presets.SelectedNode.Tag as Preset;
+                if (preset != null)
+                {
+                    MessageBox.Show(
+                        "New default preset set: " + treeView_presets.SelectedNode.Text,
+                        "Alert",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                    this.presetHandler.SetDefault(preset);
+                }
             }
             else
                 MessageBox.Show("Please select a preset first.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -825,6 +838,7 @@ namespace Handbrake
             if (openPreset.ShowDialog() == DialogResult.OK)
             {
                 EncodeTask parsed = PlistPresetHandler.Import(openPreset.FileName);
+                PresetLoader.LoadPreset(this, parsed);
                 if (presetHandler.CheckIfPresetExists(parsed.PresetName))
                 {
                     if (!presetHandler.CanUpdatePreset(parsed.PresetName))
@@ -850,8 +864,6 @@ namespace Handbrake
                                 CropSettings = parsed.UsesPictureSettings
                             };
 
-                        PresetLoader.LoadPreset(this, preset);
-
                         presetHandler.Update(preset);
                     }
                 }
@@ -864,7 +876,6 @@ namespace Handbrake
                         Query = QueryGenerator.GenerateFullQuery(this).Query,
                         CropSettings = parsed.UsesPictureSettings,
                     };
-                    PresetLoader.LoadPreset(this, preset);
                     
                     if (presetHandler.Add(preset))
                     {
@@ -1548,7 +1559,7 @@ namespace Handbrake
                     text_destination.Text = autoPath;
                 else
                     MessageBox.Show(
-                        "You currently have \"Automatically name output files\" enabled for the destination file box, but you do not have a valid default directory set.\n\nYou should set a \"Default Path\" in HandBrakes preferences. (See 'Tools' menu -> 'Options' -> 'General' Tab -> 'Default Path')",
+                        "You currently have \"Automatically name output files\" enabled for the destination file box, but you do not have a valid default directory set.\n\nYou should set a \"Default Path\" in HandBrakes preferences. (See 'Tools' menu -> 'Options' -> 'Output Files' Tab -> 'Default Path')",
                         "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
 
@@ -2641,7 +2652,7 @@ namespace Handbrake
             }
             catch (Exception exc)
             {
-                Main.ShowExceptiowWindow("HandBrake was not able to shutdown properly. You may need to forcefully quit HandBrake CLI from TaskManager if it's still running.", exc.ToString());
+                throw new GeneralApplicationException("HandBrake was not able to shutdown properly.", " You may need to forcefully quit HandBrake CLI from TaskManager if it's still running ", exc);
             }
             finally
             {
