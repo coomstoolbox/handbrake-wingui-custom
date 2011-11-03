@@ -12,7 +12,7 @@ namespace HandBrake.Interop.HbLib
 {
 	public partial class NativeConstants
 	{
-		public const uint HB_ACODEC_MASK = 0x0000FF00;
+		public const uint HB_ACODEC_MASK = 0x001FFF00;
 		public const uint HB_ACODEC_FAAC = 0x00000100;
 		public const uint HB_ACODEC_LAME = 0x00000200;
 		public const uint HB_ACODEC_VORBIS = 0x00000400;
@@ -25,9 +25,11 @@ namespace HandBrake.Interop.HbLib
 		public const uint HB_ACODEC_FFMPEG = 0x00020000;
 		public const uint HB_ACODEC_DCA_HD = 0x00040000;
 		public const uint HB_ACODEC_MP3 = 0x00080000;
-		public const uint HB_ACODEC_FF_MASK = 0x000f0000;
+		public const uint HB_ACODEC_FFFLAC = 0x00100000;
+		public const uint HB_ACODEC_FF_MASK = 0x001f0000;
 		public const uint HB_ACODEC_PASS_FLAG = 0x40000000;
 		public const uint HB_ACODEC_PASS_MASK = (HB_ACODEC_MP3 | HB_ACODEC_FFAAC | HB_ACODEC_DCA_HD | HB_ACODEC_AC3 | HB_ACODEC_DCA);
+		public const uint HB_ACODEC_AUTO_PASS = (HB_ACODEC_PASS_MASK | HB_ACODEC_PASS_FLAG);
 		public const uint HB_ACODEC_MP3_PASS = (HB_ACODEC_MP3 | HB_ACODEC_PASS_FLAG);
 		public const uint HB_ACODEC_AAC_PASS = (HB_ACODEC_FFAAC | HB_ACODEC_PASS_FLAG);
 		public const uint HB_ACODEC_AC3_PASS = (HB_ACODEC_AC3 | HB_ACODEC_PASS_FLAG);
@@ -43,6 +45,7 @@ namespace HandBrake.Interop.HbLib
 		public const int HB_AMIXDOWN_DCA_FORMAT_MASK = 0x00FFF000;
 		public const int HB_AMIXDOWN_A52_FORMAT_MASK = 0x00000FF0;
 		public const int HB_AMIXDOWN_DISCRETE_CHANNEL_COUNT_MASK = 0x0000000F;
+		public const int HB_AMIXDOWN_NONE = 0x00000000;
 		public const int HB_AMIXDOWN_MONO = 0x01000001;
 		public const int HB_AMIXDOWN_STEREO = 0x02002022;
 		public const int HB_AMIXDOWN_DOLBY = 0x042070A2;

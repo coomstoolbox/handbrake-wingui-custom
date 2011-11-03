@@ -1,7 +1,11 @@
-﻿/*  MainViewModel.cs $
-    This file is part of the HandBrake source code.
-    Homepage: <http://handbrake.fr>.
-    It may be used under the terms of the GNU General Public License. */
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="MainViewModel.cs" company="HandBrake Project (http://handbrake.fr)">
+//   This file is part of the HandBrake source code - It may be used under the terms of the GNU General Public License.
+// </copyright>
+// <summary>
+//   HandBrakes Main Window
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace HandBrakeWPF.ViewModels
 {
@@ -28,6 +32,11 @@ namespace HandBrakeWPF.ViewModels
     public class MainViewModel : ViewModelBase, IMainViewModel
     {
         #region Private Variables and Services
+
+        /// <summary>
+        /// The Backing field for the user setting service.
+        /// </summary>
+        private readonly IUserSettingService userSettingService;
 
         /// <summary>
         /// The Source Scan Service.
@@ -61,11 +70,19 @@ namespace HandBrakeWPF.ViewModels
 
         #endregion
 
-        #region Properties
-
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MainViewModel"/> class.
+        /// The viewmodel for HandBrakes main window.
+        /// </summary>
+        /// <param name="windowManager">
+        /// The window manager.
+        /// </param>
+        /// <param name="userSettingService">The User Setting Service</param>
         [ImportingConstructor]
-        public MainViewModel(IWindowManager windowManager) : base(windowManager) 
+        public MainViewModel(IWindowManager windowManager, IUserSettingService userSettingService)
+            : base(windowManager)
         {
+            this.userSettingService = userSettingService;
             // Setup Services (TODO - Bring Castle back into the project to wire these up for us)
             this.scanService = File.Exists("hb.dll") ? (IScan)new LibScan() : new ScanService();
             this.queueProcessor = new QueueProcessor(Process.GetProcessesByName("HandBrake").Length);
@@ -85,6 +102,7 @@ namespace HandBrakeWPF.ViewModels
             this.queueProcessor.EncodeService.EncodeStatusChanged += this.EncodeStatusChanged;
         }
 
+        #region Properties
         /// <summary>
         /// Gets or sets TestProperty.
         /// </summary>
@@ -184,13 +202,41 @@ namespace HandBrakeWPF.ViewModels
             this.queueProcessor.EncodeService.EncodeStatusChanged -= this.EncodeStatusChanged;
         }
 
-
         #region Menu and Taskbar
-        
-        public void AboutApplication()
+
+        /// <summary>
+        /// Open the About Window
+        /// </summary>
+        public void OpenAboutApplication()
         {
+            this.WindowManager.ShowWindow(new AboutViewModel(this.WindowManager, this.userSettingService));
         }
-        
+
+        /// <summary>
+        /// Open the Options Window
+        /// </summary>
+        public void OpenOptionsWindow()
+        {
+            this.WindowManager.ShowWindow(new OptionsViewModel(this.WindowManager, this.userSettingService));
+        }
+
+        /// <summary>
+        /// Open the Log Window
+        /// </summary>
+        public void OpenLogWindow()
+        {
+            this.WindowManager.ShowWindow(new LogViewModel(this.WindowManager));
+        }
+
+
+        /// <summary>
+        /// Open the Queue Window.
+        /// </summary>
+        public void OpenQueueWindow()
+        {
+            this.WindowManager.ShowWindow(new QueueViewModel(this.WindowManager));
+        }
+
         /// <summary>
         /// Shutdown the Application
         /// </summary>
@@ -200,7 +246,6 @@ namespace HandBrakeWPF.ViewModels
         }
 
         #endregion
-
 
         #region Event Handlers
         /// <summary>

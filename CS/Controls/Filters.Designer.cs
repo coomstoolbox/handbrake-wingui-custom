@@ -119,7 +119,8 @@
             this.drop_decomb.Items.AddRange(new object[] {
             "Off",
             "Custom",
-            "Default"});
+            "Default",
+            "Fast"});
             this.drop_decomb.Location = new System.Drawing.Point(71, 30);
             this.drop_decomb.Name = "drop_decomb";
             this.drop_decomb.Size = new System.Drawing.Size(174, 21);

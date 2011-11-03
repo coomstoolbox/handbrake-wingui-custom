@@ -7,6 +7,8 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
+using HandBrake.Interop.Model;
+
 namespace HandBrake.Interop
 {
 	using System;
@@ -76,6 +78,8 @@ namespace HandBrake.Interop
 
 			switch (mixdown)
 			{
+				case Mixdown.None:
+					return NativeConstants.HB_AMIXDOWN_NONE;
 				case Mixdown.DolbyProLogicII:
 					return NativeConstants.HB_AMIXDOWN_DOLBYPLII;
 				case Mixdown.DolbySurround:
@@ -107,6 +111,8 @@ namespace HandBrake.Interop
 		{
 			switch (mixdown)
 			{
+				case NativeConstants.HB_AMIXDOWN_NONE:
+					return Mixdown.None;
 				case NativeConstants.HB_AMIXDOWN_MONO:
 					return Mixdown.Mono;
 				case NativeConstants.HB_AMIXDOWN_STEREO:
@@ -125,12 +131,14 @@ namespace HandBrake.Interop
 		/// <summary>
 		/// Gets the native code for the given encoder.
 		/// </summary>
-		/// <param name="encoder">The audio encoder to convert. Cannot be AudioEncoder.Passthrough.</param>
+		/// <param name="encoder">The audio encoder to convert.</param>
 		/// <returns>The native code for the encoder.</returns>
 		public static uint AudioEncoderToNative(AudioEncoder encoder)
 		{
 			switch (encoder)
 			{
+				case AudioEncoder.Passthrough:
+					return NativeConstants.HB_ACODEC_AUTO_PASS;
 				case AudioEncoder.Ac3Passthrough:
 					return NativeConstants.HB_ACODEC_AC3_PASS;
                 case AudioEncoder.Ac3:
@@ -186,6 +194,82 @@ namespace HandBrake.Interop
 				default:
 					return AudioCodec.Other;
 			}
+		}
+
+		/// <summary>
+		/// Converts a native HB encoder structure to an Encoder model.
+		/// </summary>
+		/// <param name="encoder">The structure to convert.</param>
+		/// <returns>The converted model.</returns>
+		public static HBVideoEncoder NativeToVideoEncoder(hb_encoder_s encoder)
+		{
+			var result = new HBVideoEncoder
+			{
+				Id = encoder.encoder,
+				ShortName = encoder.short_name,
+				DisplayName = encoder.human_readable_name,
+				CompatibleContainers = Container.None
+			};
+
+			if ((encoder.muxers & NativeConstants.HB_MUX_MKV) > 0)
+			{
+				result.CompatibleContainers = result.CompatibleContainers | Container.Mkv;
+			}
+
+			if ((encoder.muxers & NativeConstants.HB_MUX_MP4) > 0)
+			{
+				result.CompatibleContainers = result.CompatibleContainers | Container.Mp4;
+			}
+
+			return result;
+		}
+
+		/// <summary>
+		/// Converts a native HB encoder structure to an Encoder model.
+		/// </summary>
+		/// <param name="encoder">The structure to convert.</param>
+		/// <returns>The converted model.</returns>
+		public static HBAudioEncoder NativeToAudioEncoder(hb_encoder_s encoder)
+		{
+			var result = new HBAudioEncoder
+				{
+					Id = encoder.encoder,
+					ShortName = encoder.short_name,
+					DisplayName = encoder.human_readable_name,
+					CompatibleContainers = Container.None
+				};
+
+			if ((encoder.muxers & NativeConstants.HB_MUX_MKV) > 0)
+			{
+				result.CompatibleContainers = result.CompatibleContainers | Container.Mkv;
+			}
+
+			if ((encoder.muxers & NativeConstants.HB_MUX_MP4) > 0)
+			{
+				result.CompatibleContainers = result.CompatibleContainers | Container.Mp4;
+			}
+
+			result.QualityLimits = Encoders.GetAudioQualityLimits(encoder.encoder);
+			result.DefaultQuality = HBFunctions.hb_get_default_audio_quality((uint)encoder.encoder);
+			result.CompressionLimits = Encoders.GetAudioCompressionLimits(encoder.encoder);
+			result.DefaultCompression = HBFunctions.hb_get_default_audio_compression((uint) encoder.encoder);
+
+			return result;
+		}
+
+		/// <summary>
+		/// Converts a native HB mixdown structure to a Mixdown model.
+		/// </summary>
+		/// <param name="mixdown">The structure to convert.</param>
+		/// <returns>The converted model.</returns>
+		public static HBMixdown NativeToMixdown(hb_mixdown_s mixdown)
+		{
+			return new HBMixdown
+			    {
+					Id = mixdown.amixdown,
+					ShortName = mixdown.short_name,
+					DisplayName = mixdown.human_readable_name
+			    };
 		}
 	}
 }

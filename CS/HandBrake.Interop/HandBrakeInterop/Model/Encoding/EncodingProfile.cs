@@ -9,18 +9,18 @@
 
 namespace HandBrake.Interop.Model.Encoding
 {
-    using System.Collections.Generic;
+	using System.Collections.Generic;
 
-    using HandBrake.Interop.Model;
+	using HandBrake.Interop.Model;
 
-    public class EncodingProfile
+	public class EncodingProfile
 	{
 		public EncodingProfile()
 		{
 			this.Cropping = new Cropping();
 		}
 
-		public OutputFormat OutputFormat { get; set; }
+		public Container OutputFormat { get; set; }
 		public OutputExtension PreferredExtension { get; set; }
 		public bool IncludeChapterMarkers { get; set; }
 		public bool LargeFile { get; set; }
@@ -52,8 +52,11 @@ namespace HandBrake.Interop.Model.Encoding
 		public int Deblock { get; set; }
 		public bool Grayscale { get; set; }
 
-		public VideoEncoder VideoEncoder { get; set; }
+		public string VideoEncoder { get; set; }
 		public string X264Options { get; set; }
+		public string X264Profile { get; set; }
+		public string X264Preset { get; set; }
+		public string X264Tune { get; set; }
 		public VideoEncodeRateType VideoEncodeRateType { get; set; }
 		public double Quality { get; set; }
 		public int TargetSize { get; set; }
@@ -64,6 +67,7 @@ namespace HandBrake.Interop.Model.Encoding
 		public bool PeakFramerate { get; set; }
 
 		public List<AudioEncoding> AudioEncodings { get; set; }
+		public string AudioEncoderFallback { get; set; }
 
 		public EncodingProfile Clone()
 		{
@@ -103,6 +107,9 @@ namespace HandBrake.Interop.Model.Encoding
 
 				VideoEncoder = this.VideoEncoder,
 				X264Options = this.X264Options,
+				X264Profile = this.X264Profile,
+				X264Preset = this.X264Preset,
+				X264Tune = this.X264Tune,
 				VideoEncodeRateType = this.VideoEncodeRateType,
 				Quality = this.Quality,
 				TargetSize = this.TargetSize,
