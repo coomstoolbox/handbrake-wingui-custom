@@ -9,6 +9,7 @@ namespace HandBrake.ApplicationServices.Functions
     using System.Text.RegularExpressions;
 
     using HandBrake.Interop.Model.Encoding;
+    using HandBrake.Interop.Model.Encoding.x264;
 
     using OutputFormat = HandBrake.ApplicationServices.Model.Encoding.OutputFormat;
 
@@ -90,8 +91,9 @@ namespace HandBrake.ApplicationServices.Functions
                     return Mixdown.DolbyProLogicII;
                 case "6 Channel Discrete":
                     return Mixdown.SixChannelDiscrete;
+                case "None":
                 case "Passthru":
-                    return Mixdown.Passthrough;
+                    return Mixdown.None;
                 default:
                     return Mixdown.Auto;
             }
@@ -107,7 +109,7 @@ namespace HandBrake.ApplicationServices.Functions
             switch (selectedAudio)
             {
                 case Mixdown.Auto:
-                case Mixdown.Passthrough:
+                case Mixdown.None:
                     return "auto";
                 case Mixdown.Mono:
                     return "mono";
@@ -139,7 +141,7 @@ namespace HandBrake.ApplicationServices.Functions
                     return "MP3 (lame)";
                 case "vorbis":
                     return "Vorbis (vorbis)";
-                case "ac3":
+                case "ffac3":
                     return "AC3 (ffmpeg)";
                 case "copy:ac3":
                     return "AC3 Passthru";
@@ -153,6 +155,8 @@ namespace HandBrake.ApplicationServices.Functions
                     return "DTS-HD Passthru";
                 case "ffaac":
                     return "AAC (ffmpeg)";
+                case "ffflac":
+                    return "Flac (ffmpeg)";
                 default:
                     return "AAC (faac)";
             }
@@ -175,8 +179,10 @@ namespace HandBrake.ApplicationServices.Functions
                     return AudioEncoder.Lame;
                 case "vorbis":
                     return AudioEncoder.Vorbis;
-                case "ac3":
+                case "ffac3":
                     return AudioEncoder.Ac3;
+                case "ffflac":
+                    return AudioEncoder.ffflac;
                 case "copy:ac3":
                     return AudioEncoder.Ac3Passthrough;
                 case "copy:dts":
@@ -223,6 +229,8 @@ namespace HandBrake.ApplicationServices.Functions
                     return AudioEncoder.AacPassthru;
                 case "MP3 Passthru":
                     return AudioEncoder.Mp3Passthru;
+                case "Flac (ffmpeg)":
+                    return AudioEncoder.ffflac;
                 default:
                     return AudioEncoder.Faac;
             }
@@ -256,12 +264,13 @@ namespace HandBrake.ApplicationServices.Functions
                 case AudioEncoder.DtsHDPassthrough:
                     return "copy:dtshd";
                 case AudioEncoder.Ac3:
-                    return "ac3";
+                    return "ffac3";
                 case AudioEncoder.AacPassthru:
                     return "copy:aac";
                 case AudioEncoder.Mp3Passthru:
                     return "copy:mp3";
- 
+                case AudioEncoder.ffflac:
+                    return "ffflac";
                 default:
                     return "faac";
             }
@@ -320,6 +329,112 @@ namespace HandBrake.ApplicationServices.Functions
                     return "theora";
                 default:
                     return "x264";
+            }
+        }
+
+        #endregion
+
+        #region x264
+
+        /// <summary>
+        /// Get the x264Preset from a cli parameter
+        /// </summary>
+        /// <param name="preset">
+        /// The preset.
+        /// </param>
+        /// <returns>
+        /// The x264Preset enum value
+        /// </returns>
+        public static x264Preset Getx264PresetFromCli(string preset)
+        {
+            switch (preset)
+            {
+                case "ultrafast":
+                    return x264Preset.Ultrafast;
+                case "superfast":
+                    return x264Preset.Superfast;
+                case "veryfast":
+                    return x264Preset.VeryFast;
+                case "faster":
+                    return x264Preset.Faster;
+                case "fast":
+                    return x264Preset.Fast;
+                case "medium":
+                    return x264Preset.Medium;
+                case "slow":
+                    return x264Preset.Slow;
+                case "slower":
+                    return x264Preset.Slower;
+                case "veryslow":
+                    return x264Preset.VerySlow;
+                case "placebo":
+                    return x264Preset.Placebo;
+                default:
+                    return x264Preset.Faster;
+            }
+        }
+
+        /// <summary>
+        /// Get the x264 Profile from the cli
+        /// </summary>
+        /// <param name="profile">
+        /// The preset.
+        /// </param>
+        /// <returns>
+        /// The x264Profile enum value
+        /// </returns>
+        public static x264Profile Getx264ProfileFromCli(string profile)
+        {
+            switch (profile)
+            {
+                case "baseline":
+                    return x264Profile.Baseline;
+                case "main":
+                    return x264Profile.Main;
+                case "high":
+                    return x264Profile.High;
+                case "high10":
+                    return x264Profile.High10;
+                case "high422":
+                    return x264Profile.High422;
+                case "high444":
+                    return x264Profile.High444;
+                default:
+                    return x264Profile.Main;
+            }
+        }
+
+        /// <summary>
+        /// Get x264Tune enum from a cli string
+        /// </summary>
+        /// <param name="tune">
+        /// The tune.
+        /// </param>
+        /// <returns>
+        /// The x264Tune enum value
+        /// </returns>
+        public static x264Tune Getx264TuneFromCli(string tune)
+        {
+            switch (tune)
+            {
+                case "film":
+                    return x264Tune.Film;
+                case "animation":
+                    return x264Tune.Animation;
+                case "grain":
+                    return x264Tune.Grain;
+                case "stillimage":
+                    return x264Tune.Stillimage;
+                case "psnr":
+                    return x264Tune.Psnr;
+                case "ssim":
+                    return x264Tune.Ssim;
+                case "fastdecode":
+                    return x264Tune.Fastdecode;
+                case "zerolatency":
+                    return x264Tune.Zerolatency;
+                default:
+                    return x264Tune.Film;
             }
         }
 

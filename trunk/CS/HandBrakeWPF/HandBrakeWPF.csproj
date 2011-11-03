@@ -48,6 +48,9 @@
     <Reference Include="Common.Logging">
       <HintPath>..\libraries\caliburn\Common.Logging.dll</HintPath>
     </Reference>
+    <Reference Include="Ookii.Dialogs.Wpf">
+      <HintPath>..\libraries\OokiiDialogs\Ookii.Dialogs.Wpf.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
@@ -65,20 +68,25 @@
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
-    <Reference Include="WPFToolkit.Extended">
-      <HintPath>..\libraries\WPFToolkit.Extended.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Factories\ViewModelFactory.cs" />
+    <Compile Include="Helpers\ListBoxHelper.cs" />
     <Compile Include="Startup\CastleBootstrapper.cs" />
     <Compile Include="Startup\MefBootstrapper.cs" />
+    <Compile Include="UserSettingConstants.cs" />
     <Compile Include="ViewModels\AboutViewModel.cs" />
     <Compile Include="ViewModels\AddPresetViewModel.cs" />
+    <Compile Include="ViewModels\Interfaces\ILogViewModel.cs" />
+    <Compile Include="ViewModels\Interfaces\IAboutViewModel.cs" />
     <Compile Include="ViewModels\Interfaces\IMainViewModel.cs" />
+    <Compile Include="ViewModels\Interfaces\IOptionsViewModel.cs" />
+    <Compile Include="ViewModels\Interfaces\IViewModelBase.cs" />
+    <Compile Include="ViewModels\LogViewModel.cs" />
     <Compile Include="ViewModels\PreviewViewModel.cs" />
     <Compile Include="ViewModels\QueueViewModel.cs" />
     <Compile Include="ViewModels\OptionsViewModel.cs" />
@@ -102,6 +110,9 @@
     </Compile>
     <Compile Include="Views\AddPresetView.xaml.cs">
       <DependentUpon>AddPresetView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\LogView.xaml.cs">
+      <DependentUpon>LogView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\PreviewView.xaml.cs">
       <DependentUpon>PreviewView.xaml</DependentUpon>
@@ -177,6 +188,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="Views\LogView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\PreviewView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -214,7 +229,15 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="defaultsettings.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Resource Include="Views\Images\arrow_down.png" />
+    <Resource Include="Views\Images\arrow_left.png" />
+    <Resource Include="Views\Images\arrow_right.png" />
+    <Resource Include="Views\Images\arrow_up.png" />
+  </ItemGroup>
   <ItemGroup>
     <Resource Include="Views\Images\ActivityWindow.png" />
   </ItemGroup>
@@ -239,7 +262,7 @@
     <Resource Include="Views\Images\Help16.png" />
     <Resource Include="Views\Images\hb32.png" />
     <Resource Include="Views\Images\hb16.png" />
-    <Resource Include="Views\Images\General Preferences.png" />
+    <Resource Include="Views\Images\Preferences.png" />
     <Resource Include="Views\Images\folder.png" />
     <Resource Include="Views\Images\ErrorX.png" />
     <Resource Include="Views\Images\download.png" />
@@ -254,7 +277,7 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="$(ProgramFiles)\MSBuild\StyleCop\v4.5\StyleCop.targets" />
+  <Import Project="$(ProgramFiles)\MSBuild\StyleCop\v4.*\StyleCop.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

@@ -32,13 +32,27 @@ namespace Handbrake.Controls
     public partial class AudioPanel : UserControl
     {
         #region Private Variables
-        private readonly BindingList<AudioTrack> audioTracks = new BindingList<AudioTrack>();
-        private const string Passthru = "Passthru";
-        private AdvancedAudio advancedAudio = new AdvancedAudio();
+
         /// <summary>
         /// The User Setting Service.
         /// </summary>
         private readonly IUserSettingService UserSettingService = ServiceManager.UserSettingService;
+
+        /// <summary>
+        /// Audio Tracks
+        /// </summary>
+        private readonly BindingList<AudioTrack> audioTracks = new BindingList<AudioTrack>();
+
+        /// <summary>
+        /// Mixdown
+        /// </summary>
+        private const string None = "None";
+
+        /// <summary>
+        /// The Advanced Audio Backing object
+        /// </summary>
+        private AdvancedAudio advancedAudio = new AdvancedAudio();
+
         #endregion
 
         #region Constructor and Events
@@ -75,7 +89,10 @@ namespace Handbrake.Controls
 
         #region Properties
 
-        public BindingList<Audio> ScannedTracks { get; set; }
+        /// <summary>
+        /// Gets or sets ScannedTracks.
+        /// </summary>
+        private BindingList<Audio> ScannedTracks { get; set; }
 
         /// <summary>
         /// Gets the AudioTracks Collection
@@ -85,32 +102,6 @@ namespace Handbrake.Controls
             get
             {
                 return this.audioTracks;
-            }
-        }
-
-        /// <summary>
-        /// Gets the Estimated Bitrate for Tracks and Passthru Tracks
-        /// Returns a Size object (Encoded Tracks, Passthru Trask)
-        /// </summary>
-        public Size EstimatedBitrate
-        {
-            get
-            {
-                int encodedTracks = 0;
-                int passthruTracks = 0;
-                foreach (AudioTrack track in this.AudioTracks)
-                {
-                    if (track.Encoder == AudioEncoder.Ac3Passthrough || track.Encoder == AudioEncoder.DtsPassthrough)
-                    {
-                        passthruTracks += track.ScannedTrack.Bitrate;
-                    }
-                    else
-                    {
-                        encodedTracks += track.Bitrate;
-                    }
-                }
-
-                return new Size(encodedTracks, passthruTracks);
             }
         }
 
@@ -142,9 +133,10 @@ namespace Handbrake.Controls
             if (path.Contains("MKV"))
             {
                 drp_audioEncoder.Items.Add(EnumHelper<AudioEncoder>.GetDisplay(AudioEncoder.Vorbis));
+                drp_audioEncoder.Items.Add(EnumHelper<AudioEncoder>.GetDisplay(AudioEncoder.ffflac));
             }
 
-            if (!drp_audioEncoder.Text.Contains(oldval))
+            if (!drp_audioEncoder.Items.Contains(oldval))
                 drp_audioEncoder.SelectedIndex = 0;
             else
                 drp_audioEncoder.SelectedItem = oldval;
@@ -175,7 +167,7 @@ namespace Handbrake.Controls
                 if (track.Encoder == AudioEncoder.Ac3Passthrough || track.Encoder == AudioEncoder.DtsPassthrough ||
                     track.Encoder == AudioEncoder.DtsHDPassthrough || track.Encoder == AudioEncoder.AacPassthru || track.Encoder == AudioEncoder.Mp3Passthru)
                 {
-                    track.MixDown = HandBrake.Interop.Model.Encoding.Mixdown.Passthrough;
+                    track.MixDown = HandBrake.Interop.Model.Encoding.Mixdown.None;
                     track.Bitrate = 0;
                 }
 
@@ -186,8 +178,6 @@ namespace Handbrake.Controls
             {
                 this.AutomaticTrackSelection();
             }
-
-           
 
             if (this.AudioListChanged != null)
                 this.AudioListChanged(this, new EventArgs());
@@ -258,14 +248,18 @@ namespace Handbrake.Controls
             // Some Sanity Checking
             if (audioList.SelectedRows.Count == 0)
             {
+                drp_audioMix.Enabled = drp_audioBitrate.Enabled = drp_audioSample.Enabled = btn_AdvancedAudio.Enabled = false;
                 return;
             }
 
             AudioTrack track = audioList.SelectedRows[0].DataBoundItem as AudioTrack;
             if (track == null)
             {
+                drp_audioMix.Enabled = drp_audioBitrate.Enabled = drp_audioSample.Enabled = btn_AdvancedAudio.Enabled = false;
                 return;
             }
+
+            drp_audioMix.Enabled = drp_audioBitrate.Enabled = drp_audioSample.Enabled = btn_AdvancedAudio.Enabled = true;
 
             // Handle the changed control and selected audio track.
             switch (ctl.Name)
@@ -287,7 +281,7 @@ namespace Handbrake.Controls
                     SetMixDown(EnumHelper<Mixdown>.GetDisplay(track.MixDown));
 
                     // Configure the widgets with values
-                    if (drp_audioEncoder.Text.Contains(Passthru))
+                    if (drp_audioEncoder.Text.Contains("Passthru"))
                     {
                         drp_audioMix.Enabled = drp_audioBitrate.Enabled = drp_audioSample.Enabled = btn_AdvancedAudio.Enabled = false;
                         track.Gain = 0;
@@ -296,6 +290,12 @@ namespace Handbrake.Controls
                     else
                     {
                         drp_audioMix.Enabled = drp_audioBitrate.Enabled = drp_audioSample.Enabled = btn_AdvancedAudio.Enabled = true;
+                    }
+
+                    if (drp_audioEncoder.Text.Contains("Flac"))
+                    {
+                        drp_audioBitrate.Enabled = false;
+                        track.Bitrate = 0;
                     }
 
                     // Update an item in the Audio list if required.
@@ -455,12 +455,6 @@ namespace Handbrake.Controls
                         foundTrack = true;
                         continue;
                     }
-
-                    if (this.UserSettingService.GetUserSetting<bool>(UserSettingConstants.AddOnlyOneAudioPerLanguage) && currentTrack.TrackDisplay.Contains(sourceTrack.Language))
-                    {
-                        foundTrack = true;
-                        continue;
-                    }
                 }
 
                 if (foundTrack)
@@ -501,11 +495,11 @@ namespace Handbrake.Controls
         {
             RemoveTrack();
 
-            if (this.AudioTracks.Count == 0)
-            {
-                drp_audioMix.Enabled =
-                    drp_audioBitrate.Enabled = drp_audioSample.Enabled = btn_AdvancedAudio.Enabled = true;
-            }
+            //if (this.AudioTracks.Count == 0)
+            //{
+            //    drp_audioMix.Enabled =
+            //        drp_audioBitrate.Enabled = drp_audioSample.Enabled = btn_AdvancedAudio.Enabled = true;
+            //}
         }
 
         /// <summary>
@@ -724,7 +718,7 @@ namespace Handbrake.Controls
         {
             this.AudioTracks.Clear();
 
-            drp_audioMix.Enabled = drp_audioBitrate.Enabled = drp_audioSample.Enabled = btn_AdvancedAudio.Enabled = true;
+            //drp_audioMix.Enabled = drp_audioBitrate.Enabled = drp_audioSample.Enabled = btn_AdvancedAudio.Enabled = true;
 
             if (this.AudioListChanged != null)
                 this.AudioListChanged(this, new EventArgs());
@@ -828,6 +822,7 @@ namespace Handbrake.Controls
             drp_audioBitrate.Items.Remove("448");
             drp_audioBitrate.Items.Remove("640");
             drp_audioBitrate.Items.Remove("768");
+            drp_audioBitrate.Items.Remove("0");
 
             // Find Max and Defaults based on encoders
             switch (drp_audioEncoder.Text)
@@ -849,9 +844,14 @@ namespace Handbrake.Controls
                     defaultRate = "640";
                     max = 640;
                     break;
+                case "Flac (ffmpeg)":
+                    defaultRate = "0";
+                    drp_audioBitrate.Items.Add("0");
+                    max = 0;
+                    break;
             }
 
-            if (drp_audioEncoder.Text.Contains(Passthru))
+            if (drp_audioEncoder.Text.Contains("Passthru"))
             {
                 drp_audioBitrate.Items.Add("Auto");
                 defaultRate = "Auto";
@@ -909,26 +909,26 @@ namespace Handbrake.Controls
             drp_audioMix.Items.Add("Dolby Surround");
             drp_audioMix.Items.Add("Dolby Pro Logic II");
             drp_audioMix.Items.Add("6 Channel Discrete");
-            drp_audioMix.Items.Add(Passthru);
+            drp_audioMix.Items.Add(None);
 
             switch (drp_audioEncoder.Text)
             {
                 case "AAC (faac)":
                 case "AAC (ffmpeg)":
-                    drp_audioMix.Items.Remove(Passthru);
+                    drp_audioMix.Items.Remove(None);
                     drp_audioMix.SelectedItem = currentMixdown ?? "Dolby Pro Logic II";
                     break;
                 case "MP3 (lame)":
                     drp_audioMix.Items.Remove("6 Channel Discrete");
-                    drp_audioMix.Items.Remove(Passthru);
+                    drp_audioMix.Items.Remove(None);
                     drp_audioMix.SelectedItem = currentMixdown ?? "Dolby Pro Logic II";
                     break;
                 case "Vorbis (vorbis)":
-                    drp_audioMix.Items.Remove(Passthru);
+                    drp_audioMix.Items.Remove(None);
                     drp_audioMix.SelectedItem = currentMixdown ?? "Dolby Pro Logic II";
                     break;
                 case "AC3 (ffmpeg)":
-                    drp_audioMix.Items.Remove(Passthru);
+                    drp_audioMix.Items.Remove(None);
                     drp_audioMix.SelectedItem = currentMixdown ?? "Dolby Pro Logic II";
                     break;
                 case "AC3 Passthru":
@@ -936,7 +936,7 @@ namespace Handbrake.Controls
                 case "DTS-HD Passthru":
                 case "AAC Passthru":
                 case "MP3 Passthru":
-                    drp_audioMix.SelectedItem = Passthru;
+                    drp_audioMix.SelectedItem = None;
                     break;
             }
 
